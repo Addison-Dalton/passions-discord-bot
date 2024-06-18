@@ -5,7 +5,7 @@ import {
   Collection,
 } from "discord.js";
 
-import { sleep } from "../../utils/sleep";
+import { sleep } from "../utils/sleep";
 
 type GifMessage = {
   name: string;
@@ -23,8 +23,6 @@ const passions_tabby_shade = "passions-tabitha-shade-look-back-gif-25490552";
 export const data = new SlashCommandBuilder()
   .setName("grade")
   .setDescription("Grades the passion gifs just spammed.");
-
-// TODO - someway to detect between the first set of gifs, and the second set of gifs
 
 export async function execute(interaction: CommandInteraction) {
   const channel = interaction.channel;
@@ -111,7 +109,7 @@ const scoreGifs = (gifMessages: GifMessage[]) => {
   const timeDifference = secondGif.timestamp - firstGif.timestamp;
   if (timeDifference < 100) {
     points -= 0;
-  } else if (timeDifference < 10000) {
+  } else if (timeDifference < 300) {
     points -= 15;
   } else if (timeDifference < 500) {
     points -= 25;
@@ -185,3 +183,6 @@ const gradeGifs = (points: number) => {
   const grade = grades.find((g) => points >= g.threshold);
   return grade ? grade.grade : "F";
 };
+
+const command = { data, execute };
+export default command;

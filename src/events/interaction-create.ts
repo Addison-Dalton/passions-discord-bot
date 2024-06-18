@@ -28,7 +28,5 @@ const execute = async (interaction: Interaction) => {
   }
 };
 
-module.exports = {
-  name: Events.InteractionCreate,
-  execute,
-};
+const event = { name: Events.InteractionCreate, execute };
+export default event;

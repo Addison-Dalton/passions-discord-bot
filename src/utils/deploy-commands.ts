@@ -1,13 +1,10 @@
 import "dotenv/config";
 import { REST, Routes } from "discord.js";
-import { readCommandFiles } from "./read-command-files";
+import { grade } from "../commands";
 
-const commandsToJson = [];
-const { commands } = readCommandFiles();
-
-for (const command of commands) {
-  commandsToJson.push(command.data.toJSON());
-}
+const commandsToJson = [
+  grade.data.toJSON(),
+];
 
 // Construct and prepare an instance of the REST module
 const rest = new REST().setToken(process.env.DISCORD_TOKEN!);
