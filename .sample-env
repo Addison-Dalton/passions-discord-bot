@@ -1,3 +1,4 @@
 DISCORD_TOKEN="discord app token"
 DISCORD_CLIENT_ID="discord app client id"
 DISCORD_GUILD_ID="the id for the server this bot will be ran in"
+DISCORD_PASSIONS_CHANNEL_ID="the passions channel id"
