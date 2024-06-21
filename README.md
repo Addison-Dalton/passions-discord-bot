@@ -12,4 +12,4 @@ To develop and run this locally, follow these steps:
 This was built to be published / hosted locally using docker. Assuming docker is setup on your machine, this can be done with:
 
 1. `docker compose build`
-2. `docker compse up`
+2. `docker compose up`
