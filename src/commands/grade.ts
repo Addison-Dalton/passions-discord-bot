@@ -100,7 +100,7 @@ const scoreGifs = (gifMessages: GifMessage[]) => {
   // gif messages must end with passions_tabby_shade directly followed by one of the passion_gif_candidates
   const [firstGif, secondGif] = gifMessages.slice(-2);
   if (
-    firstGif.name != passions_tabby_shade &&
+    firstGif.name == passions_tabby_shade &&
     passion_gif_candidates.includes(secondGif.name)
   ) {
     // subtract points if the approved gifs are too far apart
