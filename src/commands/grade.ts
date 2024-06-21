@@ -100,23 +100,22 @@ const scoreGifs = (gifMessages: GifMessage[]) => {
   // gif messages must end with passions_tabby_shade directly followed by one of the passion_gif_candidates
   const [firstGif, secondGif] = gifMessages.slice(-2);
   if (
-    firstGif.name != passions_tabby_shade ||
-    !passion_gif_candidates.includes(secondGif.name)
+    firstGif.name == passions_tabby_shade &&
+    passion_gif_candidates.includes(secondGif.name)
   ) {
-    points = 0;
-  }
-
-  const timeDifference = secondGif.timestamp - firstGif.timestamp;
-  if (timeDifference < 100) {
-    points -= 0;
-  } else if (timeDifference < 300) {
-    points -= 15;
-  } else if (timeDifference < 500) {
-    points -= 25;
-  } else if (timeDifference < 700) {
-    points -= 35;
-  } else if (timeDifference < 900) {
-    points -= 50;
+    // subtract points if the approved gifs are too far apart
+    const timeDifference = secondGif.timestamp - firstGif.timestamp;
+    if (timeDifference < 100) {
+      points -= 0;
+    } else if (timeDifference < 300) {
+      points -= 15;
+    } else if (timeDifference < 500) {
+      points -= 25;
+    } else if (timeDifference < 700) {
+      points -= 35;
+    } else if (timeDifference < 900) {
+      points -= 50;
+    }
   } else {
     points = 0;
   }
@@ -177,7 +176,8 @@ const gradeGifs = (points: number) => {
     { grade: "D+", threshold: 67 },
     { grade: "D", threshold: 63 },
     { grade: "D-", threshold: 60 },
-    { grade: "F", threshold: 0 },
+    { grade: "F", threshold: 10 },
+    { grade: "Z-", threshold: 0 },
   ];
 
   const grade = grades.find((g) => points >= g.threshold);
