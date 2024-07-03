@@ -3,6 +3,8 @@ import {
   CommandInteraction,
   Message,
   Collection,
+  Guild,
+  User,
 } from "discord.js";
 
 import { sleep } from "../utils/sleep";
@@ -10,6 +12,7 @@ import { sleep } from "../utils/sleep";
 type GifMessage = {
   name: string;
   timestamp: number;
+  authorDisplayName: string;
 };
 
 const passion_gif_candidates = [
@@ -40,11 +43,25 @@ export async function execute(interaction: CommandInteraction) {
   const messages = await interaction.channel?.messages.fetch({ limit: 100 });
   const gifMessages = gatherGifMessages(messages);
   console.log("gifMessages", gifMessages);
+
+  if (gifMessages.length === 0) {
+    await interaction.reply("No gifs found in the last minute.");
+    return;
+  }
+
   const score = scoreGifs(gifMessages);
+  const userScores = scoreUsers(gifMessages);
   const grade = gradeGifs(score);
   const reponse = response(score);
+
+  let userScoreList = "";
+  userScores.forEach((user) => {
+    userScoreList += `- **${user.name}**: ${user.count}\n`;
+  });
+  const userScoresString = `The following users posted gifs:\n${userScoreList}`;
+
   await interaction.reply(
-    `${reponse} The score was ${score} resulting in a grade of **${grade}**.`
+    `${reponse} The score was ${score} resulting in a grade of **${grade}**.\n\n${userScoresString}`
   );
 }
 
@@ -64,12 +81,15 @@ const response = (score: number) => {
 
 const gatherGifMessages = (messages: Collection<string, Message<boolean>>) => {
   const gifMessages: GifMessage[] = [];
-  const currentDay = new Date();
-  currentDay.setHours(0, 0, 0, 0); // Start of the current day
+  const oneMinuteAgo = Date.now() - 1 * 60 * 1000;
+  const messagesWithinLastMinute = messages.filter(
+    (message) => message.createdTimestamp >= oneMinuteAgo
+  );
 
-  messages?.forEach((message: Message) => {
+  if (messagesWithinLastMinute.size === 0) return gifMessages;
+
+  messagesWithinLastMinute.forEach((message: Message) => {
     if (
-      message.createdTimestamp >= currentDay.getTime() &&
       message.embeds.length > 0 && // gif should count as an embed
       /^https:.*gif/.test(message.content) // starts with https and contains gif in the name
     ) {
@@ -81,6 +101,7 @@ const gatherGifMessages = (messages: Collection<string, Message<boolean>>) => {
         gifMessages.push({
           name: gifName,
           timestamp: message.createdTimestamp,
+          authorDisplayName: getUserNickname(message.author, message.guild),
         });
       } catch (error) {
         console.error(
@@ -104,17 +125,21 @@ const scoreGifs = (gifMessages: GifMessage[]) => {
     passion_gif_candidates.includes(secondGif.name)
   ) {
     // subtract points if the approved gifs are too far apart
+    // 1200ms (1.2s) is the ideal time between the two gifs
     const timeDifference = secondGif.timestamp - firstGif.timestamp;
-    if (timeDifference < 100) {
+    const deviation = Math.abs(timeDifference - 1200);
+    if (deviation < 100) {
       points -= 0;
-    } else if (timeDifference < 300) {
+    } else if (deviation < 300) {
       points -= 15;
-    } else if (timeDifference < 500) {
+    } else if (deviation < 500) {
       points -= 25;
-    } else if (timeDifference < 700) {
+    } else if (deviation < 700) {
       points -= 35;
-    } else if (timeDifference < 900) {
+    } else if (deviation < 900) {
       points -= 50;
+    } else {
+      points = 0;
     }
   } else {
     points = 0;
@@ -133,6 +158,22 @@ const scoreGifs = (gifMessages: GifMessage[]) => {
   }
 
   return points;
+};
+
+const scoreUsers = (gifMessages: GifMessage[]) => {
+  // get number of gifs each user posted
+  const userGifCounts = gifMessages.reduce((acc, message) => {
+    const userIndex = acc.findIndex(
+      (user) => user.name === message.authorDisplayName
+    );
+    if (userIndex !== -1) {
+      acc[userIndex].count++;
+    } else {
+      acc.push({ name: message.authorDisplayName, count: 1 });
+    }
+    return acc;
+  }, [] as Array<{ name: string; count: number }>);
+  return userGifCounts.sort((a, b) => b.count - a.count);
 };
 
 const groupGifs = (gifMessages: GifMessage[]) => {
@@ -182,6 +223,13 @@ const gradeGifs = (points: number) => {
 
   const grade = grades.find((g) => points >= g.threshold);
   return grade ? grade.grade : "F";
+};
+
+const getUserNickname = (user: User, guild: Guild | null) => {
+  if (!guild) {
+    return user.displayName;
+  }
+  return guild.members.cache.get(user.id)?.nickname || user.displayName;
 };
 
 const command = { data, execute };
