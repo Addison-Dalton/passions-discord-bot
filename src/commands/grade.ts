@@ -19,6 +19,13 @@ const passion_gif_candidates = [
   "i-love-your-passion-justin-murry-the-seafloor-cinema-tap-tapply-song-good-passion-gif-25834259",
   "passion-alex-learn-english-with-alex-its-my-passion-passionate-gif-23032424",
   "its-about-passion-passionate-desire-dream-love-of-it-gif-14955686",
+  "explaining-proud-passion-this-is-my-passion-pauly-d-gif-12122018",
+  "owen-wilson-gif-22691883",
+  "passionate-passion-bobs-burgers-love-gif-4923358",
+  "its-all-about-the-passion-pagkahilig-pagsinta-tungkol-lahat-sa-pagkahilig-desire-gif-16778954",
+  "it's-my-passion-hemant-oberoi-pinkvilla-it's-my-hobby-it's-what-i-love-to-do-gif-8895691660290595113",
+  "its-a-passion-of-mine-nora-radford-kate-burton-inventing-anna-one-of-my-passions-gif-25142945",
+  "you-have-a-lot-of-passion-kenny-g-enthusiasm-musician-saxophonist-gif-19074422",
 ];
 
 const passions_tabby_shade = "passions-tabitha-shade-look-back-gif-25490552";
