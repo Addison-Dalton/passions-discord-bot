@@ -4,5 +4,17 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/usr/src/app
+      - bot-data:/usr/src/bot/prisma
     restart: unless-stopped
+  
+  sqlite-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.sqlite-web
+    ports:
+      - "8081:8080"
+    volumes:
+      - bot-data:/prisma
+
+volumes:
+  bot-data:

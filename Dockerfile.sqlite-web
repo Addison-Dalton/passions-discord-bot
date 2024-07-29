@@ -1,0 +1,17 @@
+# Use an official Python runtime as a parent image
+FROM python:3.8-slim
+
+# Set the working directory in the container
+WORKDIR /usr/src/app
+
+# Install sqlite-web using pip
+RUN pip install sqlite-web
+
+# Make port 8080 available to the world outside this container
+EXPOSE 8080
+
+# Define environment variable
+ENV NAME sqlite-web
+
+# Run sqlite-web when the container launches
+CMD ["python", "-m", "sqlite_web.sqlite_web", "/prisma/dev.db", "--host=0.0.0.0"]
