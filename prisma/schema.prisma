@@ -1,0 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Score {
+  id        Int         @id @default(autoincrement())
+  scoredAt  DateTime    @default(now())
+  score     Int
+  ScoredGif ScoredGif[]
+}
+
+model User {
+  id        Int         @id @default(autoincrement())
+  name      String      @unique
+  ScoredGif ScoredGif[]
+}
+
+model Gif {
+  id        Int         @id @default(autoincrement())
+  name     String @unique
+  ScoredGif ScoredGif[]
+}
+
+model ScoredGif {
+  id      Int   @id @default(autoincrement())
+  scoreId Int
+  userId  Int
+  gifId   Int
+  score   Score @relation(fields: [scoreId], references: [id])
+  user    User  @relation(fields: [userId], references: [id])
+  gif     Gif   @relation(fields: [gifId], references: [id])
+}

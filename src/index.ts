@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { Client, GatewayIntentBits, Partials } from "discord.js";
+import prisma from "./utils/prisma";
 
 import { handleCommands } from "./utils/handle-commands";
 import { handleEvents } from "./utils/handle-events";
@@ -13,8 +14,21 @@ const client = new Client({
   ],
   partials: [Partials.Message, Partials.Channel],
 });
-handleCommands(client);
-handleEvents(client);
 
-// Log in to Discord with your client's token
-client.login(process.env.DISCORD_TOKEN);
+async function main() {
+  handleCommands(client);
+  handleEvents(client);
+
+  // Log in to Discord with your client's token
+  client.login(process.env.DISCORD_TOKEN);
+}
+
+main()
+  .then(async () => {
+    await prisma.$disconnect();
+  })
+  .catch(async (e) => {
+    console.error(e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

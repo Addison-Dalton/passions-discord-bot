@@ -8,12 +8,7 @@ import {
 } from "discord.js";
 
 import { sleep } from "../utils/sleep";
-
-type GifMessage = {
-  name: string;
-  timestamp: number;
-  authorDisplayName: string;
-};
+import { saveScore, saveScoredGifs } from "../utils/prisma";
 
 const passion_gif_candidates = [
   "i-love-your-passion-justin-murry-the-seafloor-cinema-tap-tapply-song-good-passion-gif-25834259",
@@ -57,19 +52,23 @@ export async function execute(interaction: CommandInteraction) {
   }
 
   const score = scoreGifs(gifMessages);
-  const userScores = scoreUsers(gifMessages);
+  const userGifs = groupGifsByUser(gifMessages);
   const grade = gradeGifs(score);
   const reponse = response(score);
 
   let userScoreList = "";
-  userScores.forEach((user) => {
-    userScoreList += `- **${user.name}**: ${user.count}\n`;
+  userGifs.forEach((user) => {
+    userScoreList += `- **${user.name}**: ${user.gifs.length}\n`;
   });
   const userScoresString = `The following users posted gifs:\n${userScoreList}`;
 
   await interaction.reply(
     `${reponse} The score was ${score} resulting in a grade of **${grade}**.\n\n${userScoresString}`
   );
+
+  // save data to database
+  const dbScore = await saveScore(score);
+  await saveScoredGifs(dbScore.id, userGifs);
 }
 
 const response = (score: number) => {
@@ -109,6 +108,7 @@ const gatherGifMessages = (messages: Collection<string, Message<boolean>>) => {
           name: gifName,
           timestamp: message.createdTimestamp,
           authorDisplayName: getUserNickname(message.author, message.guild),
+          authorName: message.author.username,
         });
       } catch (error) {
         console.error(
@@ -167,20 +167,23 @@ const scoreGifs = (gifMessages: GifMessage[]) => {
   return points;
 };
 
-const scoreUsers = (gifMessages: GifMessage[]) => {
-  // get number of gifs each user posted
-  const userGifCounts = gifMessages.reduce((acc, message) => {
+const groupGifsByUser = (gifMessages: GifMessage[]) => {
+  const usersGifs = gifMessages.reduce((acc, message) => {
     const userIndex = acc.findIndex(
       (user) => user.name === message.authorDisplayName
     );
     if (userIndex !== -1) {
-      acc[userIndex].count++;
+      acc[userIndex].gifs.push({ name: message.name });
     } else {
-      acc.push({ name: message.authorDisplayName, count: 1 });
+      acc.push({
+        name: message.authorDisplayName,
+        username: message.authorName,
+        gifs: [{ name: message.name }],
+      });
     }
     return acc;
-  }, [] as Array<{ name: string; count: number }>);
-  return userGifCounts.sort((a, b) => b.count - a.count);
+  }, [] as UserGifs[]);
+  return usersGifs.sort((a, b) => b.gifs.length - a.gifs.length);
 };
 
 const groupGifs = (gifMessages: GifMessage[]) => {
