@@ -9,6 +9,7 @@ import {
 
 import { sleep } from "../utils/sleep";
 import { saveScore, saveScoredGifs } from "../utils/prisma";
+import { letterGrade } from "../utils/commands";
 
 const passion_gif_candidates = [
   "i-love-your-passion-justin-murry-the-seafloor-cinema-tap-tapply-song-good-passion-gif-25834259",
@@ -30,6 +31,7 @@ export const data = new SlashCommandBuilder()
   .setDescription("Grades the passion gifs just spammed.");
 
 export async function execute(interaction: CommandInteraction) {
+  // TODO - abtract this part to be used across all commands
   const channel = interaction.channel;
   if (!channel || channel.id !== process.env.DISCORD_PASSIONS_CHANNEL_ID) {
     await interaction.reply(
@@ -53,7 +55,7 @@ export async function execute(interaction: CommandInteraction) {
 
   const score = scoreGifs(gifMessages);
   const userGifs = groupGifsByUser(gifMessages);
-  const grade = gradeGifs(score);
+  const grade = letterGrade(score);
   const reponse = response(score);
 
   let userScoreList = "";
@@ -210,29 +212,6 @@ const groupGifs = (gifMessages: GifMessage[]) => {
   }
 
   return groups;
-};
-
-const gradeGifs = (points: number) => {
-  const grades = [
-    { grade: "S+++", threshold: 100 },
-    { grade: "A+", threshold: 97 },
-    { grade: "A", threshold: 93 },
-    { grade: "A-", threshold: 90 },
-    { grade: "B+", threshold: 87 },
-    { grade: "B", threshold: 83 },
-    { grade: "B-", threshold: 80 },
-    { grade: "C+", threshold: 77 },
-    { grade: "C", threshold: 73 },
-    { grade: "C-", threshold: 70 },
-    { grade: "D+", threshold: 67 },
-    { grade: "D", threshold: 63 },
-    { grade: "D-", threshold: 60 },
-    { grade: "F", threshold: 10 },
-    { grade: "Z-", threshold: 0 },
-  ];
-
-  const grade = grades.find((g) => points >= g.threshold);
-  return grade ? grade.grade : "F";
 };
 
 const getUserNickname = (user: User, guild: Guild | null) => {
