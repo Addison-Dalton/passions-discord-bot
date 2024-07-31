@@ -28,14 +28,20 @@ export const saveScoredGifs = async (scoreId: number, userGifs: UserGifs[]) => {
       });
     }
 
+    const uniqueGifs = Array.from(new Set(user.gifs.map((gif) => gif.name)))
+      .map((name) => user.gifs.find((gif) => gif.name === name))
+      .filter((gif) => gif !== undefined);
+
     // get existing gifs and create new ones
     const existingGifsDb = await prisma.gif.findMany({
-      where: { name: { in: user.gifs.map((gif) => gif.name) } },
+      where: { name: { in: uniqueGifs.map((gif) => gif.name) } },
     });
+
+    const newGifs = uniqueGifs.filter(
+      (gif) => !existingGifsDb.find((g) => g.name === gif.name)
+    );
     const newGifsDb = await prisma.gif.createManyAndReturn({
-      data: user.gifs
-        .filter((gif) => !existingGifsDb.find((g) => g.name === gif.name))
-        .map((gif) => ({ name: gif.name })),
+      data: newGifs.map((gif) => ({ name: gif.name })),
     });
     const allGifsDb = [...existingGifsDb, ...newGifsDb];
     // create scored gifs
