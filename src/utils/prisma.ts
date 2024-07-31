@@ -49,9 +49,16 @@ export const saveScoredGifs = async (scoreId: number, userGifs: UserGifs[]) => {
         };
       }),
     });
-  };
+  }
 };
 
+export const getScores = async (count = 5) => {
+  const scores = await prisma.score.findMany({
+    take: count,
+    orderBy: { scoredAt: "desc" },
+  });
 
+  return scores;
+};
 
 export default prisma;
