@@ -67,4 +67,58 @@ export const getScores = async (count = 5) => {
   return scores;
 };
 
+export const getLeaderboard = async (count = 0) => {
+  const result = await prisma.scoredGif.groupBy({
+    by: ["userId"],
+    _count: {
+      id: true,
+    },
+    orderBy: {
+      _count: {
+        id: "desc",
+      },
+    },
+  });
+
+  if (count > 0) {
+    result.splice(count);
+  }
+
+  if (result.length === 0) return [];
+
+  const userIds = result.map((r) => r.userId);
+  // I think it's dumb to make another DB query, but I don't see where prisma
+  // support relations in groupBy queries
+  const users = await prisma.user.findMany({
+    where: { id: { in: userIds } },
+  });
+
+  const leaderboard = result.map((r) => {
+    const user = users.find((u) => u.id === r.userId);
+    return {
+      user: user!.name,
+      count: r._count.id,
+    };
+  });
+
+  return leaderboard;
+};
+
+// roundUp to roundUp any score below 70 to 70
+export const getAverageScore = async (roundUp = true) => {
+  const scores = await prisma.score.findMany();
+
+  const average = Math.round(
+    scores.reduce((sum, { score }) => {
+      // round up any score below 70 if roundUp is true
+      if (roundUp && score < 70) {
+        return sum + 70;
+      }
+      return sum + score;
+    }, 0) / scores.length
+  );
+
+  return average;
+};
+
 export default prisma;

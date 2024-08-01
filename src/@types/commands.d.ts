@@ -10,3 +10,5 @@ type UserGifs = {
   username: string;
   gifs: Array<{ name: string }>;
 };
+
+type DataCommandOptions = "scores" | "leaderboard" | "averageScore";

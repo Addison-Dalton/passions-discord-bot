@@ -1,10 +1,11 @@
 import "dotenv/config";
 import { REST, Routes } from "discord.js";
-import { grade, score } from "../commands";
+import { grade, score, data } from "../commands";
 
 const commandsToJson = [
   grade.data.toJSON(),
   score.data.toJSON(),
+  data.data.toJSON(),
 ];
 
 // Construct and prepare an instance of the REST module
