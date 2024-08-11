@@ -5,7 +5,7 @@ import { letterGrade } from "../utils/commands";
 
 export const data = new SlashCommandBuilder()
   .setName("gif_data")
-  .setDescription("Sends requested data on gif scores")
+  .setDescription("Returns requested data on gif scores")
   .addStringOption((option) =>
     option
       .setName("data_option")
