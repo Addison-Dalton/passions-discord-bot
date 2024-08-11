@@ -9,6 +9,9 @@
     "build": "tsup src/index.ts --minify",
     "deploy-commands": "tsx src/utils/deploy-commands.ts"
   },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -20,7 +23,9 @@
     "tsup": "^8.1.0"
   },
   "devDependencies": {
+    "@types/node": "^22.2.0",
     "prisma": "^5.17.0",
+    "ts-node": "^10.9.2",
     "tsx": "^4.15.6",
     "typescript": "^5.4.5"
   }

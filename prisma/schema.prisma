@@ -25,7 +25,7 @@ model User {
 
 model Gif {
   id        Int         @id @default(autoincrement())
-  name     String @unique
+  name      String      @unique
   ScoredGif ScoredGif[]
 }
 
@@ -37,4 +37,12 @@ model ScoredGif {
   score   Score @relation(fields: [scoreId], references: [id])
   user    User  @relation(fields: [userId], references: [id])
   gif     Gif   @relation(fields: [gifId], references: [id])
+}
+
+model Character {
+  id          Int         @id @default(autoincrement())
+  name        String?     @unique
+  aliasId     Int?
+  primaryName Character?  @relation("CharacterAliases", fields: [aliasId], references: [id])
+  aliases     Character[] @relation("CharacterAliases")
 }
