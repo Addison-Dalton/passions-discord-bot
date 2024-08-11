@@ -1,4 +1,5 @@
 import { PrismaClient, Prisma } from "@prisma/client";
+import { matchGifsWithCharacter } from "./character";
 
 const prisma = new PrismaClient();
 
@@ -121,4 +122,70 @@ export const getAverageScore = async (roundUp = true) => {
   return average;
 };
 
+export const getPassionCharacters = async () => {
+  const characters = await prisma.character.findMany({
+    include: { aliases: true },
+    where: { aliasId: null }, // only primary characters,
+  });
+
+  return characters;
+};
+
+export const getScoredGifs = async () => {
+  const scoredGifs = await prisma.scoredGif.findMany({
+    include: { gif: true },
+  });
+
+  return scoredGifs;
+};
+
+export const getCharacterPopularity = async (characterName: string) => {
+  const character = await prisma.character.findUnique({
+    where: { name: characterName },
+    include: { aliases: true },
+  });
+  const scoredGifs = await getScoredGifs();
+  const gifNames = scoredGifs.map((scoredGif) => scoredGif.gif.name);
+
+  if (!character) {
+    return null;
+  }
+
+  const matchingGifs = matchGifsWithCharacter(gifNames, character);
+
+  return matchingGifs.length;
+};
+
+export const getMostPopularCharacters = async (limit = 10) => {
+  const characters = await getPassionCharacters();
+  const scoredGifs = await getScoredGifs();
+  const gifNames = scoredGifs.map((scoredGif) => scoredGif.gif.name);
+
+  const popularCharacters = characters
+    .map((character) => {
+      const matchingGifs = matchGifsWithCharacter(gifNames, character);
+      return {
+        character,
+        count: matchingGifs.length,
+      };
+    })
+    .sort((a, b) => b.count - a.count);
+
+  return popularCharacters.slice(0, limit);
+};
+
+export const getRandomMatchingCharacter = async (gifs: GifMessage[]) => {
+  const characters = await getPassionCharacters();
+  const chosenCharacterIndex = Math.floor(Math.random() * characters.length);
+  const chosenCharacter = characters[chosenCharacterIndex];
+  const gifNames = gifs.map((gif) => gif.name);
+  console.info("Chosen character:", chosenCharacter.name);
+
+  const matchingGifs = matchGifsWithCharacter(gifNames, chosenCharacter);
+
+  return {
+    matchingGifs,
+    chosenCharacter,
+  };
+};
 export default prisma;

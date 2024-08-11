@@ -12,3 +12,8 @@ type UserGifs = {
 };
 
 type DataCommandOptions = "scores" | "leaderboard" | "averageScore";
+
+type PassionsCharacter = {
+  name: string;
+  aliases: string[];
+}

@@ -8,7 +8,11 @@ import {
 } from "discord.js";
 
 import { sleep } from "../utils/sleep";
-import { saveScore, saveScoredGifs } from "../utils/prisma";
+import {
+  saveScore,
+  saveScoredGifs,
+  getRandomMatchingCharacter,
+} from "../utils/prisma";
 import { letterGrade } from "../utils/commands";
 
 const passion_gif_candidates = [
@@ -46,14 +50,21 @@ export async function execute(interaction: CommandInteraction) {
   // get the last 100 messages
   const messages = await interaction.channel?.messages.fetch({ limit: 100 });
   const gifMessages = gatherGifMessages(messages);
-  console.log("gifMessages", gifMessages);
+  console.info("gifMessages", gifMessages);
 
   if (gifMessages.length === 0) {
     await interaction.reply("No gifs found in the last minute.");
     return;
   }
 
-  const score = scoreGifs(gifMessages);
+  let score = scoreGifs(gifMessages);
+
+  // add extra points for each gif that matches the randomly chosen character
+  const { matchingGifs, chosenCharacter } = await getRandomMatchingCharacter(
+    gifMessages
+  );
+  score += matchingGifs.length;
+
   const userGifs = groupGifsByUser(gifMessages);
   const grade = letterGrade(score);
   const reponse = response(score);
@@ -63,10 +74,9 @@ export async function execute(interaction: CommandInteraction) {
     userScoreList += `- **${user.name}**: ${user.gifs.length}\n`;
   });
   const userScoresString = `The following users posted gifs:\n${userScoreList}`;
+  const chosenCharacterString = `You've been awarded **${matchingGifs.length}** extra points for posting gifs of **${chosenCharacter.name}**!`;
 
-  await interaction.reply(
-    `${reponse} The score was ${score} resulting in a grade of **${grade}**.\n\n${userScoresString}`
-  );
+  await interaction.reply(`${reponse} The score was ${score} resulting in a grade of **${grade}**.\n${matchingGifs.length > 0 ? chosenCharacterString : ""}\n\n${userScoresString}`);
 
   // save data to database
   const dbScore = await saveScore(score);
