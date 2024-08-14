@@ -75,8 +75,15 @@ export async function execute(interaction: CommandInteraction) {
   });
   const userScoresString = `The following users posted gifs:\n${userScoreList}`;
   const chosenCharacterString = `You've been awarded **${matchingGifs.length}** extra points for posting gifs of **${chosenCharacter.name}**!`;
+  const noGifsWithCharacterString = `No gifs were posted of **${chosenCharacter.name}**. No extra points for you!`;
 
-  await interaction.reply(`${reponse} The score was ${score} resulting in a grade of **${grade}**.\n${matchingGifs.length > 0 ? chosenCharacterString : ""}\n\n${userScoresString}`);
+  await interaction.reply(
+    `${reponse} The score was ${score} resulting in a grade of **${grade}**.\n${
+      matchingGifs.length > 0
+        ? chosenCharacterString
+        : noGifsWithCharacterString
+    }\n\n${userScoresString}`
+  );
 
   // save data to database
   const dbScore = await saveScore(score);
