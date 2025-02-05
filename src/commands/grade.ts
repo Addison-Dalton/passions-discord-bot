@@ -106,7 +106,7 @@ const response = (score: number) => {
 
 const gatherGifMessages = (messages: Collection<string, Message<boolean>>) => {
   const gifMessages: GifMessage[] = [];
-  const oneMinuteAgo = Date.now() - 1 * 60 * 1000;
+  const oneMinuteAgo = Date.now() - 2 * 60 * 1000;
   const messagesWithinLastMinute = messages.filter(
     (message) => message.createdTimestamp >= oneMinuteAgo
   );
