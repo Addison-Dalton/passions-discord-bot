@@ -13,3 +13,6 @@ This was built to be published / hosted locally using docker. Assuming docker is
 
 1. `docker compose build`
 2. `docker compose up`
+
+## If the bot stops reporting gifs.
+Look at the calculation for `oneMinuteAgo` in `grade.ts`. For whatever reason this seems to drift off. I seem to have to increment the starting value to fix.
