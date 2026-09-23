@@ -15,18 +15,8 @@ import {
 } from "../utils/prisma";
 import { letterGrade } from "../utils/commands";
 
-const passion_gif_candidates = [
-  "i-love-your-passion-justin-murry-the-seafloor-cinema-tap-tapply-song-good-passion-gif-25834259",
-  "passion-alex-learn-english-with-alex-its-my-passion-passionate-gif-23032424",
-  "its-about-passion-passionate-desire-dream-love-of-it-gif-14955686",
-  "explaining-proud-passion-this-is-my-passion-pauly-d-gif-12122018",
-  "owen-wilson-gif-22691883",
-  "passionate-passion-bobs-burgers-love-gif-4923358",
-  "its-all-about-the-passion-pagkahilig-pagsinta-tungkol-lahat-sa-pagkahilig-desire-gif-16778954",
-  "it's-my-passion-hemant-oberoi-pinkvilla-it's-my-hobby-it's-what-i-love-to-do-gif-8895691660290595113",
-  "its-a-passion-of-mine-nora-radford-kate-burton-inventing-anna-one-of-my-passions-gif-25142945",
-  "you-have-a-lot-of-passion-kenny-g-enthusiasm-musician-saxophonist-gif-19074422",
-];
+// any gif with "passion" in the name counts as the follow-up to the tabby gif
+const passion_gif_pattern = /passion/i;
 
 const passions_tabby_shade = "passions-tabitha-shade-look-back-gif-25490552";
 
@@ -39,7 +29,7 @@ export async function execute(interaction: CommandInteraction) {
   const channel = interaction.channel;
   if (!channel || channel.id !== process.env.DISCORD_PASSIONS_CHANNEL_ID) {
     await interaction.reply(
-      "This command can only be used in the passions channel."
+      "This command can only be used in the passions channel.",
     );
     return;
   }
@@ -49,7 +39,9 @@ export async function execute(interaction: CommandInteraction) {
 
   // get the last 100 messages
   const messages = await interaction.channel?.messages.fetch({ limit: 100 });
-  const gifMessages = gatherGifMessages(messages);
+  // use Discord's timestamp for the interaction rather than Date.now(), since the
+  // container clock can drift from Discord's clock (which message timestamps use)
+  const gifMessages = gatherGifMessages(messages, interaction.createdTimestamp);
   console.info("gifMessages", gifMessages);
 
   if (gifMessages.length === 0) {
@@ -60,9 +52,8 @@ export async function execute(interaction: CommandInteraction) {
   let score = scoreGifs(gifMessages);
 
   // add extra points for each gif that matches the randomly chosen character
-  const { matchingGifs, chosenCharacter } = await getRandomMatchingCharacter(
-    gifMessages
-  );
+  const { matchingGifs, chosenCharacter } =
+    await getRandomMatchingCharacter(gifMessages);
   score += matchingGifs.length;
 
   const userGifs = groupGifsByUser(gifMessages);
@@ -82,7 +73,7 @@ export async function execute(interaction: CommandInteraction) {
       matchingGifs.length > 0
         ? chosenCharacterString
         : noGifsWithCharacterString
-    }\n\n${userScoresString}`
+    }\n\n${userScoresString}`,
   );
 
   // save data to database
@@ -104,11 +95,14 @@ const response = (score: number) => {
   }
 };
 
-const gatherGifMessages = (messages: Collection<string, Message<boolean>>) => {
+const gatherGifMessages = (
+  messages: Collection<string, Message<boolean>>,
+  referenceTime: number,
+) => {
   const gifMessages: GifMessage[] = [];
-  const oneMinuteAgo = Date.now() - 3 * 60 * 1000;
+  const oneMinuteAgo = referenceTime - 1 * 60 * 1000;
   const messagesWithinLastMinute = messages.filter(
-    (message) => message.createdTimestamp >= oneMinuteAgo
+    (message) => message.createdTimestamp >= oneMinuteAgo,
   );
 
   if (messagesWithinLastMinute.size === 0) return gifMessages;
@@ -131,7 +125,7 @@ const gatherGifMessages = (messages: Collection<string, Message<boolean>>) => {
         });
       } catch (error) {
         console.error(
-          `Error parsing gif from message with content: ${message.content}. Error encountered is: ${error}`
+          `Error parsing gif from message with content: ${message.content}. Error encountered is: ${error}`,
         );
       }
     }
@@ -144,11 +138,13 @@ const scoreGifs = (gifMessages: GifMessage[]) => {
   let points = 100;
   // sort by timestamp oldest to newest
   gifMessages.sort((a, b) => a.timestamp - b.timestamp);
-  // gif messages must end with passions_tabby_shade directly followed by one of the passion_gif_candidates
+  // gif messages must end with passions_tabby_shade directly followed by a gif matching passion_gif_pattern
   const [firstGif, secondGif] = gifMessages.slice(-2);
   if (
+    firstGif &&
+    secondGif &&
     firstGif.name == passions_tabby_shade &&
-    passion_gif_candidates.includes(secondGif.name)
+    passion_gif_pattern.test(secondGif.name)
   ) {
     // subtract points if the approved gifs are too far apart
     // 1200ms (1.2s) is the ideal time between the two gifs
@@ -176,9 +172,9 @@ const scoreGifs = (gifMessages: GifMessage[]) => {
   for (const group of groupedGifs) {
     if (group.length > 4) {
       points -= 5;
-    } else if ((group.length = 3)) {
+    } else if (group.length === 3) {
       points += 5;
-    } else if ((group.length = 2)) {
+    } else if (group.length === 2) {
       points += 3;
     }
   }
@@ -189,7 +185,7 @@ const scoreGifs = (gifMessages: GifMessage[]) => {
 const groupGifsByUser = (gifMessages: GifMessage[]) => {
   const usersGifs = gifMessages.reduce((acc, message) => {
     const userIndex = acc.findIndex(
-      (user) => user.name === message.authorDisplayName
+      (user) => user.name === message.authorDisplayName,
     );
     if (userIndex !== -1) {
       acc[userIndex].gifs.push({ name: message.name });
